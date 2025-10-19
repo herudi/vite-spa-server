@@ -1,6 +1,6 @@
 # Vite SPA Server
 
-Vite plugin SPA Server with <i>Single-Port</i> beetwen Backend and Frontend.
+Vite plugin SPA Server with <i>Single-Port</i> between Backend and Frontend.
 
 > Design for Single Fighter Developer who want to build Fullstack Application with ease.
 
