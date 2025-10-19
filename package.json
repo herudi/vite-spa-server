@@ -1,0 +1,39 @@
+{
+  "name": "vite-spa-server",
+  "version": "0.0.1",
+  "description": " Vite plugin SPA Server: one port, one fight",
+  "license": "MIT",
+  "author": "Herudi",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herudi/vite-spa-server"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.1.2",
+    "prettier": "^3.6.2",
+    "rollup": "^4.41.1",
+    "rollup-plugin-dts": "^6.2.1",
+    "tslib": "^2.8.1"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  }
+}
