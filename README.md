@@ -8,7 +8,7 @@ Vite plugin SPA Server with <i>Single-Port</i> between Backend and Frontend.
 
 - <i>Single-Port</i> for Backend and Frontend.
 - Sharing `types` between Backend and Frontend.
-- Supports multiple backend frameworks (Express, Hono, etc.).
+- Supports backend frameworks (Express, Hono, etc.).
 - Hot Module Replacement (HMR) for Frontend during development.
 - Easy integration with existing Vite projects (React, Vue, Svelte, etc.).
 - Simple configuration.
@@ -49,7 +49,7 @@ export default defineConfig({
 });
 ```
 
-then, create minimal server entry point file at `src/server/index.ts`:
+then, create minimal server at `src/server/index.ts`:
 
 ```javascript
 import express from "express";
