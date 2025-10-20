@@ -8,12 +8,13 @@ const devServer = (opts: SPAServerOptions = {}): PluginOption => {
     name: "vite-spa-server",
     apply: "serve",
     config(self) {
-      let port = opts.port;
-      if (typeof port === "object") port = port.dev;
-      return {
-        ...self,
-        server: { port },
-      };
+      let port =
+        opts.port && typeof opts.port === "object" ? opts.port.dev : opts.port;
+      if (typeof port === "number") {
+        self.server ??= {};
+        self.server.port = port;
+      }
+      return self;
     },
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {

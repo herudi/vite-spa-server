@@ -5,7 +5,7 @@ Vite plugin SPA Server with <i>Single-Port</i> between Backend and Frontend.
 > Design for Single Fighter Developer who want to build Fullstack Application with ease.
 
 [![ci](https://img.shields.io/github/actions/workflow/status/herudi/vite-spa-server/ci.yml?branch=master)](https://github.com/herudi/vite-spa-server)
-[![npm version](https://img.shields.io/badge/npm-0.0.2-blue.svg)](https://npmjs.org/package/vite-spa-server)
+[![npm version](https://img.shields.io/badge/npm-0.0.3-blue.svg)](https://npmjs.org/package/vite-spa-server)
 [![License](https://img.shields.io/:license-mit-blue.svg)](http://badges.mit-license.org)
 [![download-url](https://img.shields.io/npm/dm/vite-spa-server.svg)](https://npmjs.org/package/vite-spa-server)
 
