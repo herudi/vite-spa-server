@@ -4,11 +4,16 @@ Vite plugin SPA Server with <i>Single-Port</i> between Backend and Frontend.
 
 > Design for Single Fighter Developer who want to build Fullstack Application with ease.
 
+[![ci](https://img.shields.io/github/actions/workflow/status/herudi/vite-spa-server/ci.yml?branch=master)](https://github.com/herudi/vite-spa-server)
+[![npm version](https://img.shields.io/badge/npm-0.0.2-blue.svg)](https://npmjs.org/package/vite-spa-server)
+[![License](https://img.shields.io/:license-mit-blue.svg)](http://badges.mit-license.org)
+[![download-url](https://img.shields.io/npm/dm/vite-spa-server.svg)](https://npmjs.org/package/vite-spa-server)
+
 ## Features
 
 - <i>Single-Port</i> for Backend and Frontend.
 - Sharing `types` between Backend and Frontend.
-- Supports backend frameworks (Express, Hono, etc.).
+- Supports backend frameworks (Express, Hono, NHttp, etc.).
 - Hot Module Replacement (HMR) for Frontend during development.
 - Easy integration with existing Vite projects (React, Vue, Svelte, etc.).
 - Simple configuration.
@@ -88,7 +93,7 @@ node dist
 ## Configuration Options
 
 - `port`: The port number on which the server will run.
-- `serverType`: The type of backend server to use (e.g., `express`, `hono`, etc.).
+- `serverType`: The type of backend server to use (e.g., `express`, `hono`, `nhttp`, etc.).
 - `entry`: The entry point file for your backend server (default: `src/server/index.ts`).
 - `runtime`: The runtime environment for the server (default: `node`).
 - `build`: Build options for the server.
