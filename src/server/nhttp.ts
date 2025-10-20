@@ -1,15 +1,16 @@
 import type { ServerTypeFunc } from "../types.js";
 import { createRequestFromIncoming, sendStream } from "./util.js";
 
-export default <ServerTypeFunc>{
-  inject({ port }) {
+export const nhttpServer: ServerTypeFunc = {
+  name: "nhttp",
+  script({ port }) {
     return `import app from "./app.js";
 import serveStatic from "@nhttp/nhttp/serve-static";
 const clientPath = new URL("./client", import.meta.url).pathname;
 app.use(serveStatic(clientPath, { spa: true, etag: true }));
 app.listen(${port}, () => console.log("Running on port ${port}"));`;
   },
-  async serve(app, req, res, next) {
+  async handle(app, req, res, next) {
     const resWeb = (await app.handleRequest(
       await createRequestFromIncoming(req),
     )) as Response;

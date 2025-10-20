@@ -46,11 +46,12 @@ Deno.serve({
   };
 };
 
-export default <ServerTypeFunc>{
-  inject({ port, runtime }) {
+export const honoServer: ServerTypeFunc = {
+  name: "hono",
+  script({ port, runtime }) {
     return withRuntime(port as number)[runtime!];
   },
-  async serve(app, req, res, next) {
+  async handle(app, req, res, next) {
     const resWeb = (await app.fetch(
       await createRequestFromIncoming(req),
     )) as Response;

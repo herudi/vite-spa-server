@@ -18,7 +18,7 @@ const devServer = (opts: SPAServerOptions = {}): PluginOption => {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const mod = await server.ssrLoadModule(opts.entry!);
-        await fw[opts.serverType!].serve(mod.default, req, res, next);
+        await opts.serverTypeFunc.handle(mod.default, req, res, next);
       });
     },
   };
@@ -61,7 +61,7 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
       if (opts.buildServer === false) return;
       fs.writeFileSync(
         `${outDir}/index.js`,
-        fw[opts.serverType!].inject({ ...opts, port }),
+        await opts.serverTypeFunc.script({ ...opts, port }),
       );
       console.log(`Server builded to ${outDir}/index.js`);
     },
@@ -70,11 +70,22 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
 
 export const spaServer = (opts: SPAServerOptions = {}): PluginOption => {
   opts.entry ??= "./src/server/index.ts";
-  opts.serverType ??= "express";
+  const typ = (opts.serverType ??= "express");
   opts.runtime ??= "node";
+  opts.serverTypeFunc ??= typeof typ === "string" ? fw[typ] : typ;
   return [buildServer(opts), devServer(opts)];
 };
 
-export type { SPAServerOptions };
+export type {
+  SPAServerOptions,
+  ExternalOption,
+  NextFunction,
+  ServerTypeFunc,
+} from "./types.js";
+
+export { createRequestFromIncoming, sendStream } from "./server/util.js";
+export { honoServer } from "./server/hono.js";
+export { expressServer } from "./server/express.js";
+export { nhttpServer } from "./server/nhttp.js";
 
 export default spaServer;

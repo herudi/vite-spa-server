@@ -11,6 +11,7 @@ export type ExternalOption =
       isResolved: boolean,
     ) => boolean | any);
 
+type ServerType = "express" | "hono" | "nhttp";
 export type SPAServerOptions = {
   entry?: string;
   port?:
@@ -19,7 +20,8 @@ export type SPAServerOptions = {
         dev?: number;
         prod?: number;
       };
-  serverType?: "express" | "hono" | "nhttp";
+  serverType?: ServerType | ServerTypeFunc;
+  serverTypeFunc?: ServerTypeFunc;
   external?: ExternalOption;
   build?: BuildEnvironment;
   runtime?: "node" | "deno" | "bun";
@@ -27,8 +29,9 @@ export type SPAServerOptions = {
 };
 export type NextFunction = (err?: any) => any;
 export type ServerTypeFunc = {
-  inject(opts: SPAServerOptions): string | Promise<string>;
-  serve(
+  name: string;
+  script(opts: SPAServerOptions): string | Promise<string>;
+  handle(
     app: any,
     req: IncomingMessage,
     res: ServerResponse,

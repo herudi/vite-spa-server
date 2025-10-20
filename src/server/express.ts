@@ -1,7 +1,8 @@
 import type { ServerTypeFunc } from "../types";
 
-export default <ServerTypeFunc>{
-  inject({ port }) {
+export const expressServer: ServerTypeFunc = {
+  name: "express",
+  script({ port }) {
     return `import app from "./app.js"; 
 import express from "express"; 
 import path from "node:path";
@@ -16,7 +17,7 @@ app.use((req, res, next) => {
 });
 app.listen(${port}, () => console.log("Running on port ${port}"));`;
   },
-  async serve(app, req, res, next) {
+  async handle(app, req, res, next) {
     await app(req, res, next);
   },
 };
