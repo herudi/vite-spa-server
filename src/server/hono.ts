@@ -1,55 +1,89 @@
-import type { ServerTypeFunc } from "../types.js";
-import { createRequestFromIncoming, sendStream } from "./util.js";
+import type { ServerTypeFunc, ServerScriptOptions } from "../types.js";
+import {
+  createRequestFromIncoming,
+  sendStream,
+  StringBuilder,
+} from "./util.js";
 
-const withRuntime = (port: number) => {
+const createStatic = ({ clientDir, routes }: ServerScriptOptions) => {
+  const init = new StringBuilder();
+  init.append(`import { etag } from "hono/etag";`);
+  init.append(`import fs from "node:fs";`);
+  init.append(`import path from "node:path";`);
+  init.append(
+    `const clientPath = new URL("./${clientDir}", import.meta.url).pathname;`,
+  );
+  init.append(
+    routes
+      .map(({ path, index, isMain, dir }, i) => {
+        const str = new StringBuilder();
+        if (isMain && path !== "/") {
+          str.append(`app.get("/", (c) => c.redirect("${path}"));`);
+        }
+        str.append(`const setServeStatic${i} = (serveStatic) => {
+  app.use(
+    "${path === "/" ? "" : path}/*",
+    etag(),
+    serveStatic({
+      root: clientPath + "${dir}",
+      index: "${index}",
+      rewriteRequestPath: (path) => path.replace("${path}", "/")
+    })
+  );
+  app.get("${path === "/" ? "" : path}/*", etag(), (c) => {
+    const pathfile = path.join(clientPath, ".${dir}/${index}");
+    const html = fs.readFileSync(pathfile, { encoding: "utf-8" });
+    return c.html(html);
+  });
+}`);
+        str.append(`setServeStatic${i}(serveStatic);`);
+        return str.toString();
+      })
+      .join(""),
+  );
+  return init.toString();
+};
+
+const withRuntime = ({ port, clientDir, routes }: ServerScriptOptions) => {
   return {
-    node: `import app from "./app.js";
-import { serve } from "@hono/node-server";
-import fs from "node:fs";
-import { serveStatic } from "@hono/node-server/serve-static";
-const clientPath = new URL("./client", import.meta.url).pathname;
-app.use("*", serveStatic({ root: clientPath }));
-app.get("*", (c) => {
-  const html = fs.readFileSync(clientPath + "/index.html", { encoding: "utf-8" });
-  return c.html(html);
-});
-serve({
-  fetch: app.fetch,
-  port: ${port},
-});
-console.log("Running on port ${port}");`,
-    bun: `import app from "./app.js";
-import { serveStatic } from "hono/bun";
-const clientPath = new URL("./client", import.meta.url).pathname;
-app.use("*", serveStatic({ root: clientPath }));
-app.get("*", async (c) => {
-  const html = await Bun.file(clientPath + "/index.html").text();
-  return c.html(html);
-});
-Bun.serve({
-  fetch: app.fetch,
-  port: ${port}
-});
-console.log("Running on port ${port}");`,
-    deno: `import app from "./app.js";
-import { serveStatic } from "hono/deno";
-const clientPath = new URL("./client", import.meta.url).pathname;
-app.use("*", serveStatic({ root: clientPath }));
-app.get("*", async (c) => {
-  const html = await Deno.readTextFile(clientPath + "/index.html");
-  return c.html(html);
-});
-Deno.serve({
-  port: ${port},
-  onListen: () => console.log("Running on port ${port}")
-}, app.fetch);`,
+    node: () => {
+      const sb = new StringBuilder();
+      sb.append(`import app from "./app.js";`);
+      sb.append(`import { serve } from "@hono/node-server";`);
+      sb.append(
+        `import { serveStatic } from "@hono/node-server/serve-static";`,
+      );
+      sb.append(createStatic({ clientDir, routes }));
+      sb.append(`serve({ fetch: app.fetch, port: ${port} });`);
+      sb.append(`console.log("Running on port ${port}");`);
+      return sb.toString();
+    },
+    bun: () => {
+      const sb = new StringBuilder();
+      sb.append(`import app from "./app.js";`);
+      sb.append(`import { serveStatic } from "hono/bun";`);
+      sb.append(createStatic({ clientDir, routes }));
+      sb.append(`Bun.serve({ fetch: app.fetch, port: ${port} });`);
+      sb.append(`console.log("Running on port ${port}");`);
+      return sb.toString();
+    },
+    deno: () => {
+      const sb = new StringBuilder();
+      sb.append(`import app from "./app.js";`);
+      sb.append(`import { serveStatic } from "hono/deno";`);
+      sb.append(createStatic({ clientDir, routes }));
+      sb.append(
+        `Deno.serve({ onListen: () => console.log("Running on port ${port}"), port: ${port} }, app.fetch);`,
+      );
+      return sb.toString();
+    },
   };
 };
 
 export const honoServer: ServerTypeFunc = {
   name: "hono",
-  script({ port, runtime }) {
-    return withRuntime(port as number)[runtime!];
+  script(opts) {
+    return withRuntime(opts)[opts.runtime!]?.() ?? "";
   },
   async handle(app, req, res, next) {
     const resWeb = (await app.fetch(

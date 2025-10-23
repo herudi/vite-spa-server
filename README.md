@@ -1,11 +1,11 @@
 # Vite SPA Server
 
-Vite plugin SPA Server with <i>Single-Port</i> between Backend and Frontend.
+Vite plugin <i>Single-Port</i> between Backend and Frontend.
 
 > Design for Single Fighter Developer who want to build Fullstack Application with ease.
 
 [![ci](https://img.shields.io/github/actions/workflow/status/herudi/vite-spa-server/ci.yml?branch=master)](https://github.com/herudi/vite-spa-server)
-[![npm version](https://img.shields.io/badge/npm-0.0.3-blue.svg)](https://npmjs.org/package/vite-spa-server)
+[![npm version](https://img.shields.io/badge/npm-0.0.4-blue.svg)](https://npmjs.org/package/vite-spa-server)
 [![License](https://img.shields.io/:license-mit-blue.svg)](http://badges.mit-license.org)
 [![download-url](https://img.shields.io/npm/dm/vite-spa-server.svg)](https://npmjs.org/package/vite-spa-server)
 
@@ -17,6 +17,7 @@ Vite plugin SPA Server with <i>Single-Port</i> between Backend and Frontend.
 - Hot Module Replacement (HMR) for Frontend during development.
 - Easy integration with existing Vite projects (React, Vue, Svelte, etc.).
 - Simple configuration.
+- Multiple apps using config `area`.
 
 ## Why use Vite SPA Server?
 
@@ -61,7 +62,7 @@ import express from "express";
 
 const app = express();
 
-// you can call this route in the frontend with same port.
+// you can call this route in the frontend with same port like fetch("/api/user").
 app.get("/api/user", (req, res) => {
   res.json({
     name: "John",
@@ -97,8 +98,9 @@ node dist
 - `entry`: The entry point file for your backend server (default: `src/server/index.ts`).
 - `runtime`: The runtime environment for the server (default: `node`).
 - `build`: Build options for the server.
+- `area`: Map path to html for multiple apps.
 
-## Handle 404 API
+## Handle 404 for API
 
 ```ts
 app.use((req, res, next) => {
@@ -107,6 +109,26 @@ app.use((req, res, next) => {
     return res.send({ error: "API endpoint not found" });
   }
   next();
+});
+```
+
+## Multiple Apps using area
+
+```ts
+export default defineConfig({
+  plugins: [
+    react(),
+    spaServer({
+      port: 3000,
+      serverType: "express",
+      area: {
+        "/": "./index.html",
+        "/admin": "./admin.html",
+        "/sign": "./sign.html",
+        // more...
+      },
+    }),
+  ],
 });
 ```
 

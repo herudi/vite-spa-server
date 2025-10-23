@@ -1,14 +1,39 @@
 import type { ServerTypeFunc } from "../types.js";
-import { createRequestFromIncoming, sendStream } from "./util.js";
+import {
+  createRequestFromIncoming,
+  sendStream,
+  StringBuilder,
+} from "./util.js";
 
 export const nhttpServer: ServerTypeFunc = {
   name: "nhttp",
-  script({ port }) {
-    return `import app from "./app.js";
-import serveStatic from "@nhttp/nhttp/serve-static";
-const clientPath = new URL("./client", import.meta.url).pathname;
-app.use(serveStatic(clientPath, { spa: true, etag: true }));
-app.listen(${port}, () => console.log("Running on port ${port}"));`;
+  script({ port, clientDir, routes }) {
+    const sb = new StringBuilder();
+    sb.append(`import app from "./app.js";`);
+    sb.append(`import serveStatic from "@nhttp/nhttp/serve-static";`);
+    sb.append(
+      `const clientPath = new URL("./${clientDir}", import.meta.url).pathname;`,
+    );
+    sb.append(
+      routes
+        .map(({ path, index, isMain, dir }) => {
+          const str = new StringBuilder();
+          if (isMain && path !== "/") {
+            str.append(
+              `app.get("/", (rev) => rev.response.redirect("${path}"));`,
+            );
+          }
+          str.append(
+            `app.use(serveStatic(clientPath + "${dir}", { index: "${index}", spa: true, etag: true, prefix: "${path}" }));`,
+          );
+          return str.toString();
+        })
+        .join(""),
+    );
+    sb.append(
+      `app.listen(${port}, () => console.log("Running on port ${port}"));`,
+    );
+    return sb.toString();
   },
   async handle(app, req, res, next) {
     const resWeb = (await app.handleRequest(

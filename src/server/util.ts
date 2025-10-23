@@ -50,3 +50,13 @@ export const sendStream = async (resWeb: Response, res: ServerResponse) => {
   }
   res.end();
 };
+
+export class StringBuilder {
+  private _str: string = "";
+  append(str: string) {
+    this._str += `${str}\n`;
+  }
+  toString() {
+    return this._str;
+  }
+}

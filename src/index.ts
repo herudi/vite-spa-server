@@ -2,22 +2,43 @@ import { type PluginOption, build } from "vite";
 import fs from "node:fs";
 import fw from "./server/index.js";
 import type { SPAServerOptions } from "./types.js";
+import path from "node:path";
 
 const devServer = (opts: SPAServerOptions = {}): PluginOption => {
+  const area = opts.area;
   return {
     name: "vite-spa-server",
     apply: "serve",
     config(self) {
-      let port =
-        opts.port && typeof opts.port === "object" ? opts.port.dev : opts.port;
-      if (typeof port === "number") {
-        self.server ??= {};
-        self.server.port = port;
+      self.server ??= {};
+      const port = opts.port;
+      if (port != null) {
+        self.server.port = typeof port === "object" ? port.dev : port;
       }
+      if (opts.area && !(opts.base in opts.area)) {
+        opts.base = Object.keys(opts.area)[0];
+      }
+      if (opts.base) self.base = opts.base;
       return self;
     },
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        if (area) {
+          const url = req.url;
+          const reqPath = normUrl(url);
+          const pathFile = area[reqPath];
+          const send = async (url: string, pathFile: string) => {
+            const file = fs.readFileSync(pathFile, { encoding: "utf-8" });
+            const result = await server.transformIndexHtml(url, file);
+            return res.setHeader("Content-Type", "text/html").end(result);
+          };
+          if (pathFile) {
+            return await send(reqPath, pathFile);
+          } else if (!reqPath.includes("@") && !path.extname(reqPath)) {
+            const find = Object.keys(area).find((p) => reqPath.startsWith(p));
+            if (find) return await send(reqPath, area[find]);
+          }
+        }
         const mod = await server.ssrLoadModule(opts.entry!);
         await opts.serverTypeFunc.handle(mod.default, req, res, next);
       });
@@ -26,23 +47,32 @@ const devServer = (opts: SPAServerOptions = {}): PluginOption => {
 };
 
 const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
-  let outDir: string;
+  let outDir: string, base: string, root: string;
+  opts.clientDir ??= "client";
   return {
     name: "vite-spa-server-build",
     apply: "build",
+    configResolved(config) {
+      base = normUrl(config.base || "/");
+      root = config.root;
+    },
     config(self) {
-      const build = self.build ?? {};
-      outDir = build.outDir ?? "dist";
-      build.outDir = `${outDir}/client`;
-      build.emptyOutDir ??= true;
-      return {
-        ...self,
-        build: build,
-      };
+      self.build ??= {};
+      outDir = self.build.outDir ?? "dist";
+      self.build.outDir = `${outDir}/${opts.clientDir}`;
+      self.build.emptyOutDir = true;
+      if (opts.area) {
+        self.build ??= {};
+        self.build.rollupOptions ??= {};
+        self.build.rollupOptions.input = mutatePrefix(opts.area);
+      }
+      if (opts.base) self.base = opts.base;
+      return self;
     },
     async writeBundle() {
       let port = opts.port ?? 3000;
       if (typeof port === "object") port = port.prod ?? 3000;
+      opts.base ??= base;
       await build({
         configFile: false,
         build: {
@@ -60,9 +90,37 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
         },
       });
       if (opts.buildServer === false) return;
+      const routes = [];
+      let home: Record<string, any>;
+      if (opts.area) {
+        if (!(opts.base in opts.area)) {
+          opts.base = Object.keys(opts.area)[0];
+        }
+        for (const k in opts.area) {
+          let val = opts.area[k];
+          if (!path.isAbsolute(val)) val = path.join(root, val);
+          if (!fs.existsSync(val)) {
+            throw new Error(`file '${val}' not found`);
+          }
+          const dir = path.dirname(val).replace(root, "");
+          const index = path.basename(val);
+          const isMain = k === opts.base;
+          const data = { path: k, index, isMain, dir };
+          if (isMain) home = data;
+          else routes.push(data);
+        }
+        if (home) routes.push(home);
+      } else {
+        routes.push({
+          path: opts.base,
+          index: "index.html",
+          isMain: true,
+          dir: "",
+        });
+      }
       fs.writeFileSync(
         `${outDir}/index.js`,
-        await opts.serverTypeFunc.script({ ...opts, port }),
+        await opts.serverTypeFunc.script({ ...opts, port, routes }),
       );
       console.log(`Server builded to ${outDir}/index.js`);
     },
@@ -77,11 +135,33 @@ export const spaServer = (opts: SPAServerOptions = {}): PluginOption => {
   return [buildServer(opts), devServer(opts)];
 };
 
+const normUrl = (url: string) => {
+  if (url.includes("?")) url = url.split("?")[0];
+  if (url !== "/" && url.endsWith("/")) url = url.slice(0, -1);
+  return url;
+};
+
+const mutatePrefix = (prefix: Record<string, string>) => {
+  const out = {} as Record<string, string>;
+  for (const k in prefix) {
+    const val = prefix[k];
+    if (k === "/") {
+      out.index = val;
+    } else if (k.includes("/")) {
+      out[k.replaceAll("/", "")] = val;
+    } else {
+      out[k] = val;
+    }
+  }
+  return out;
+};
+
 export type {
   SPAServerOptions,
   ExternalOption,
   NextFunction,
   ServerTypeFunc,
+  ServerScriptOptions,
 } from "./types.js";
 
 export { createRequestFromIncoming, sendStream } from "./server/util.js";

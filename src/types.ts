@@ -12,7 +12,7 @@ export type ExternalOption =
     ) => boolean | any);
 
 type ServerType = "express" | "hono" | "nhttp";
-export type SPAServerOptions = {
+export interface SPAServerOptions {
   entry?: string;
   port?:
     | number
@@ -26,11 +26,17 @@ export type SPAServerOptions = {
   build?: BuildEnvironment;
   runtime?: "node" | "deno" | "bun";
   buildServer?: boolean;
-};
+  area?: Record<string, string>;
+  base?: string;
+  clientDir?: string;
+}
+export interface ServerScriptOptions extends SPAServerOptions {
+  routes: any[];
+}
 export type NextFunction = (err?: any) => any;
 export type ServerTypeFunc = {
   name: string;
-  script(opts: SPAServerOptions): string | Promise<string>;
+  script(opts: ServerScriptOptions): string | Promise<string>;
   handle(
     app: any,
     req: IncomingMessage,
