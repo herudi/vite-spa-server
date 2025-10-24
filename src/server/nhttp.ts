@@ -7,16 +7,19 @@ import {
 
 export const nhttpServer: ServerTypeFunc = {
   name: "nhttp",
-  script({ port, clientDir, routes }) {
+  script({ port, clientDir, areas }) {
     const sb = new StringBuilder();
     sb.append(`import app from "./app.js";`);
-    sb.append(`import serveStatic from "@nhttp/nhttp/serve-static";`);
+    sb.append(`import path from "node:path";`);
+    sb.append(
+      `import { serveStatic, sendFile } from "@nhttp/nhttp/serve-static";`,
+    );
     sb.append(
       `const clientPath = new URL("./${clientDir}", import.meta.url).pathname;`,
     );
     sb.append(
-      routes
-        .map(({ path, index, isMain, dir }) => {
+      areas
+        .map(({ path, index, isMain, dir, wildcard }) => {
           const str = new StringBuilder();
           if (isMain && path !== "/") {
             str.append(
@@ -24,8 +27,14 @@ export const nhttpServer: ServerTypeFunc = {
             );
           }
           str.append(
-            `app.use(serveStatic(clientPath + "${dir}", { index: "${index}", spa: true, etag: true, prefix: "${path}" }));`,
+            `app.use(serveStatic(clientPath + "${dir}", { index: "${index}", etag: true, prefix: "${path}" }));`,
           );
+          const wild = wildcard ? "*" : "";
+          const routePath = path + (path === "/" ? "" : "/") + wild;
+          str.append(`app.get("${routePath}", async (rev) => {
+  const pathfile = path.join(clientPath, ".${dir}/${index}");
+  return await sendFile(rev, pathfile, { etag: true });
+});`);
           return str.toString();
         })
         .join(""),

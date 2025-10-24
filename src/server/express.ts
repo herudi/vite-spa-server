@@ -3,7 +3,7 @@ import { StringBuilder } from "./util";
 
 export const expressServer: ServerTypeFunc = {
   name: "express",
-  script({ port, clientDir, routes }) {
+  script({ port, clientDir, areas }) {
     const sb = new StringBuilder();
     sb.append(`import app from "./app.js";`);
     sb.append(`import express from "express";`);
@@ -12,8 +12,8 @@ export const expressServer: ServerTypeFunc = {
       `const clientPath = new URL("./${clientDir}", import.meta.url).pathname;`,
     );
     sb.append(
-      routes
-        .map(({ path, index, isMain, dir }) => {
+      areas
+        .map(({ path, index, isMain, dir, wildcard }) => {
           const str = new StringBuilder();
           if (isMain && path !== "/") {
             str.append(`app.get("/", (_, res) => res.redirect("${path}"));`);
@@ -21,8 +21,11 @@ export const expressServer: ServerTypeFunc = {
           str.append(
             `app.use("${path}", express.static(clientPath + "${dir}", { index: "${index}" }));`,
           );
+          const check = wildcard
+            ? `req.path.startsWith("${path}")`
+            : `req.path === "${path}"`;
           str.append(`app.use((req, res, next) => {
-  if (req.method === "GET" && req.path.startsWith("${path}")) {
+  if (req.method === "GET" && ${check}) {
     res.sendFile(path.join(clientPath, ".${dir}/${index}"));
   } else {
     next();

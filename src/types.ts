@@ -29,9 +29,10 @@ export interface SPAServerOptions {
   area?: Record<string, string>;
   base?: string;
   clientDir?: string;
+  routerType?: "hash" | "browser" | "none";
 }
 export interface ServerScriptOptions extends SPAServerOptions {
-  routes: any[];
+  areas: any[];
 }
 export type NextFunction = (err?: any) => any;
 export type ServerTypeFunc = {

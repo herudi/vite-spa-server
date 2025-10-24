@@ -1,7 +1,7 @@
 {
   "name": "vite-spa-server",
-  "version": "0.0.4",
-  "description": " Vite plugin SPA Server: one port, one fight",
+  "version": "0.0.5",
+  "description": "Vite plugin Single-Port between Backend and Frontend",
   "license": "MIT",
   "author": "Herudi",
   "type": "module",
