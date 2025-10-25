@@ -5,7 +5,7 @@ Vite plugin <i>Single-Port</i> between Backend and Frontend.
 > Design for Single Fighter Developer who want to build Fullstack Application with ease.
 
 [![ci](https://img.shields.io/github/actions/workflow/status/herudi/vite-spa-server/ci.yml?branch=master)](https://github.com/herudi/vite-spa-server)
-[![npm version](https://img.shields.io/badge/npm-0.0.5-blue.svg)](https://npmjs.org/package/vite-spa-server)
+[![npm version](https://img.shields.io/badge/npm-0.0.6-blue.svg)](https://npmjs.org/package/vite-spa-server)
 [![License](https://img.shields.io/:license-mit-blue.svg)](http://badges.mit-license.org)
 [![download-url](https://img.shields.io/npm/dm/vite-spa-server.svg)](https://npmjs.org/package/vite-spa-server)
 
@@ -25,7 +25,9 @@ When developing a Single Page Application (SPA) with a backend API, managing sep
 
 ## Usage
 
-Create vite project (example react).
+Create vite project.
+
+> Example: React as frontend and Express as backend.
 
 ```bash
 npm create vite@latest my-app -- --template react
@@ -33,8 +35,14 @@ npm create vite@latest my-app -- --template react
 cd my-app
 
 npm install
+```
 
+then, install `vite-spa-server` and `express`
+
+```bash
 npm install vite-spa-server --save-dev
+
+npm install express
 ```
 
 In your `vite.config.ts` file, import and use the plugin:
