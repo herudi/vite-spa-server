@@ -69,7 +69,7 @@ export const expressServer: ServerTypeFunc = {
     }
     return sb.toString();
   },
-  async handle(app, req, res, next) {
+  async handle(app: any, req, res, next) {
     await app(req, res, next);
   },
 };

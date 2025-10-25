@@ -1,6 +1,6 @@
 {
   "name": "vite-spa-server",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Vite plugin Single-Port between Backend and Frontend",
   "license": "MIT",
   "author": "Herudi",

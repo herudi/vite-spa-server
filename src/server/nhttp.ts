@@ -75,7 +75,7 @@ export const nhttpServer: ServerTypeFunc = {
     }
     return sb.toString();
   },
-  async handle(app, req, res, next) {
+  async handle(app: any, req, res, next) {
     const resWeb = (await app.handleRequest(
       await createRequestFromIncoming(req),
     )) as Response;

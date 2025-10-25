@@ -5,7 +5,7 @@ Vite plugin <i>Single-Port</i> between Backend and Frontend.
 > Design for Single Fighter Developer who want to build Fullstack Application with ease.
 
 [![ci](https://img.shields.io/github/actions/workflow/status/herudi/vite-spa-server/ci.yml?branch=master)](https://github.com/herudi/vite-spa-server)
-[![npm version](https://img.shields.io/badge/npm-0.0.6-blue.svg)](https://npmjs.org/package/vite-spa-server)
+[![npm version](https://img.shields.io/badge/npm-0.0.7-blue.svg)](https://npmjs.org/package/vite-spa-server)
 [![License](https://img.shields.io/:license-mit-blue.svg)](http://badges.mit-license.org)
 [![download-url](https://img.shields.io/npm/dm/vite-spa-server.svg)](https://npmjs.org/package/vite-spa-server)
 
@@ -103,11 +103,12 @@ node dist
 
 - `port`: The port number on which the server will run.
 - `serverType`: The type of backend server to use (e.g., `express`, `hono`, `nhttp`, etc.).
-- `entry`: The entry point file for your backend server (default: `src/server/index.ts`).
+- `entry`: The entry point file for your backend server (default: `./src/server/index.ts`).
 - `runtime`: The runtime environment for the server (default: `node`).
 - `build`: Build options for the server.
 - `area`: Map path to html for multiple apps.
 - `routerType`: Router Type between Backend and Frontend (e.g., `browser`, `hash`, `none`).
+- `startServer`: When true, the server will start immediately after initialization. when false, just export your app.
 
 ## Handle 404 for API
 

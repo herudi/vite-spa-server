@@ -26,8 +26,10 @@ type ServerType = "express" | "hono" | "nhttp";
  */
 export interface SPAServerOptions {
   /**
-   * Entry point file path for the SPA.
-   * This is typically your main application file (e.g., 'src/main.ts')
+   * Entry point file path for the main server.
+   * This is typically your main server file.
+   * @default
+   * "./src/server/index.ts"
    */
   entry?: string;
 
@@ -51,6 +53,8 @@ export interface SPAServerOptions {
    * Type of server to use.
    * Built-in options include 'express', 'hono', or 'nhttp',
    * or you can provide a custom server implementation
+   * @default
+   * "express"
    */
   serverType?: ServerType | ServerTypeFunc;
 
@@ -74,11 +78,13 @@ export interface SPAServerOptions {
   /**
    * Runtime environment for the server.
    * Supports 'node', 'deno', or 'bun'
+   * @default
+   * "node"
    */
   runtime?: "node" | "deno" | "bun";
 
   /**
-   * Whether to build the server code.
+   * Whether to build the server script.
    * When true, the server code will be included in the build process
    */
   buildServer?: boolean;
@@ -109,12 +115,16 @@ export interface SPAServerOptions {
    * - 'hash': Uses hash-based routing (#/route)
    * - 'browser': Uses HTML5 History API
    * - 'none': No routing
+   * @default
+   * "browser"
    */
   routerType?: "hash" | "browser" | "none";
 
   /**
    * Whether to automatically start the server.
    * When true, the server will start immediately after initialization
+   * @default
+   * true
    */
   startServer?: boolean;
 }
@@ -142,14 +152,14 @@ export type ServerTypeFunc = {
 
   /**
    * HTTP request handler function
-   * @param {any} app - Server application instance
+   * @param {unknown} app - Server application instance
    * @param {IncomingMessage} req - Node.js HTTP request object
    * @param {ServerResponse} res - Node.js HTTP response object
    * @param {NextFunction} next - Function to pass control to next middleware
    * @returns {void | Promise<void>}
    */
   handle(
-    app: any,
+    app: unknown,
     req: IncomingMessage,
     res: ServerResponse,
     next: NextFunction,

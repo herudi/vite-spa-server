@@ -133,7 +133,7 @@ export const honoServer: ServerTypeFunc = {
   script(opts) {
     return withRuntime(opts)[opts.runtime!]?.() ?? "";
   },
-  async handle(app, req, res, next) {
+  async handle(app: any, req, res, next) {
     const resWeb = (await app.fetch(
       await createRequestFromIncoming(req),
     )) as Response;
