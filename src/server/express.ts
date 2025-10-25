@@ -1,9 +1,34 @@
 import type { ServerTypeFunc } from "../types";
 import { StringBuilder } from "./util";
 
+/**
+ * Express.js server implementation for SPA server.
+ * Provides static file serving and SPA routing capabilities.
+ *
+ * Features:
+ * - Static file serving for client assets
+ * - SPA route handling with HTML5 history support
+ * - Area-based routing configuration
+ * - Main path redirection
+ * - Wildcard route support
+ *
+ * @example
+ * ```ts
+ * import { spaServer, expressServer } from 'vite-spa-server'
+ *
+ * export default {
+ *   plugins: [
+ *     spaServer({
+ *       serverType: expressServer,
+ *       port: 3000
+ *     })
+ *   ]
+ * }
+ * ```
+ */
 export const expressServer: ServerTypeFunc = {
   name: "express",
-  script({ port, clientDir, areas }) {
+  script({ port, clientDir, areas, startServer }) {
     const sb = new StringBuilder();
     sb.append(`import app from "./app.js";`);
     sb.append(`import express from "express";`);
@@ -35,9 +60,13 @@ export const expressServer: ServerTypeFunc = {
         })
         .join(""),
     );
-    sb.append(
-      `app.listen(${port}, () => console.log("Running on port ${port}"));`,
-    );
+    if (startServer) {
+      sb.append(
+        `app.listen(${port}, () => console.log("Running on port ${port}"));`,
+      );
+    } else {
+      sb.append(`export default app;`);
+    }
     return sb.toString();
   },
   async handle(app, req, res, next) {

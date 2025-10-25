@@ -46,18 +46,29 @@ const createStatic = ({ clientDir, areas }: ServerScriptOptions) => {
   return init.toString();
 };
 
-const withRuntime = ({ port, clientDir, areas }: ServerScriptOptions) => {
+const withRuntime = ({
+  port,
+  clientDir,
+  areas,
+  startServer,
+}: ServerScriptOptions) => {
   return {
     node: () => {
       const sb = new StringBuilder();
       sb.append(`import app from "./app.js";`);
-      sb.append(`import { serve } from "@hono/node-server";`);
+      if (startServer) {
+        sb.append(`import { serve } from "@hono/node-server";`);
+      }
       sb.append(
         `import { serveStatic } from "@hono/node-server/serve-static";`,
       );
       sb.append(createStatic({ clientDir, areas }));
-      sb.append(`serve({ fetch: app.fetch, port: ${port} });`);
-      sb.append(`console.log("Running on port ${port}");`);
+      if (startServer) {
+        sb.append(`serve({ fetch: app.fetch, port: ${port} });`);
+        sb.append(`console.log("Running on port ${port}");`);
+      } else {
+        sb.append(`export default app;`);
+      }
       return sb.toString();
     },
     bun: () => {
@@ -65,8 +76,12 @@ const withRuntime = ({ port, clientDir, areas }: ServerScriptOptions) => {
       sb.append(`import app from "./app.js";`);
       sb.append(`import { serveStatic } from "hono/bun";`);
       sb.append(createStatic({ clientDir, areas }));
-      sb.append(`Bun.serve({ fetch: app.fetch, port: ${port} });`);
-      sb.append(`console.log("Running on port ${port}");`);
+      if (startServer) {
+        sb.append(`Bun.serve({ fetch: app.fetch, port: ${port} });`);
+        sb.append(`console.log("Running on port ${port}");`);
+      } else {
+        sb.append(`export default app;`);
+      }
       return sb.toString();
     },
     deno: () => {
@@ -74,14 +89,45 @@ const withRuntime = ({ port, clientDir, areas }: ServerScriptOptions) => {
       sb.append(`import app from "./app.js";`);
       sb.append(`import { serveStatic } from "hono/deno";`);
       sb.append(createStatic({ clientDir, areas }));
-      sb.append(
-        `Deno.serve({ onListen: () => console.log("Running on port ${port}"), port: ${port} }, app.fetch);`,
-      );
+      if (startServer) {
+        sb.append(
+          `Deno.serve({ onListen: () => console.log("Running on port ${port}"), port: ${port} }, app.fetch);`,
+        );
+      } else {
+        sb.append(`export default app;`);
+      }
       return sb.toString();
     },
   };
 };
 
+/**
+ * Hono web framework implementation for SPA server.
+ * Provides static file serving and routing capabilities with support for multiple runtimes.
+ *
+ * Features:
+ * - Multi-runtime support (Node.js, Bun, Deno)
+ * - Static file serving with ETag support
+ * - SPA routing with HTML5 history
+ * - Area-based routing configuration
+ * - Automatic server initialization
+ * - Main path redirection
+ *
+ * @example
+ * ```ts
+ * import { spaServer, honoServer } from 'vite-spa-server'
+ *
+ * export default {
+ *   plugins: [
+ *     spaServer({
+ *       serverType: honoServer,
+ *       runtime: 'bun', // or deno/node
+ *       port: 3000
+ *     })
+ *   ]
+ * }
+ * ```
+ */
 export const honoServer: ServerTypeFunc = {
   name: "hono",
   script(opts) {
