@@ -52,6 +52,7 @@ const devServer = (opts: SPAServerOptions = {}): PluginOption => {
 const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
   let outDir: string, base: string, root: string;
   opts.clientDir ??= "client";
+  opts.startServer ??= true;
   return {
     name: "vite-spa-server-build",
     apply: "build",
@@ -141,6 +142,38 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
   };
 };
 
+/**
+ * Creates a Vite plugin for Single Page Application (SPA) server setup.
+ * Handles both development and production server configurations.
+ *
+ * @param {SPAServerOptions} opts - Configuration options for the SPA server
+ * @returns {PluginOption} Array of Vite plugins for build and dev server
+ *
+ * @example
+ * ```ts
+ * // vite.config.ts
+ * import { defineConfig } from 'vite'
+ * import { spaServer } from 'vite-spa-server'
+ *
+ * export default defineConfig({
+ *   plugins: [
+ *     spaServer({
+ *       entry: './src/server/index.ts',
+ *       port: 3000,
+ *       serverType: 'express'
+ *     })
+ *   ]
+ * })
+ * ```
+ *
+ * Features:
+ * - Supports multiple server types (express, hono, nhttp)
+ * - Handles both dev and production builds
+ * - Configurable routing types (hash, browser)
+ * - Area-based configuration for multi-page setups
+ * - Automatic server initialization
+ * - Custom server type implementation support
+ */
 export const spaServer = (opts: SPAServerOptions = {}): PluginOption => {
   opts.entry ??= "./src/server/index.ts";
   const typ = (opts.serverType ??= "express");
