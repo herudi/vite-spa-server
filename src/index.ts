@@ -5,7 +5,7 @@ import type { SPAServerOptions } from "./types.js";
 import path from "node:path";
 
 const devServer = (opts: SPAServerOptions = {}): PluginOption => {
-  const area = normArea(opts.area);
+  const areas = opts["_areas"];
   return {
     name: "vite-spa-server",
     apply: "serve",
@@ -15,35 +15,32 @@ const devServer = (opts: SPAServerOptions = {}): PluginOption => {
       if (port != null) {
         self.server.port = typeof port === "object" ? port.dev : port;
       }
-      if (area && !(opts.base in area)) {
-        opts.base = findBase(area) ?? opts.base;
-      }
-      if (opts.base) self.base = opts.base;
+      opts.base = self.base = findBase(areas) ?? opts.base;
       return self;
     },
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (area) {
-          const isAsset = (reqPath: string) => {
-            return reqPath.includes("@") || path.extname(reqPath);
-          };
+        if (areas) {
+          const isAsset = (reqPath: string) =>
+            reqPath.includes("@") || path.extname(reqPath);
           const url = req.url;
           const reqPath = normUrl(url);
-          const pathFile = area[reqPath];
-          const send = async (url: string, pathFile: string) => {
-            const file = fs.readFileSync(pathFile, { encoding: "utf-8" });
+          const area = areas.find(({ path, wildcard }) => {
+            return (
+              reqPath === path ||
+              (path !== "/" && wildcard && reqPath.startsWith(path))
+            );
+          });
+          if (area && !isAsset(reqPath)) {
+            const file = fs.readFileSync(area.index, { encoding: "utf-8" });
             const result = await server.transformIndexHtml(url, file);
             return res.setHeader("Content-Type", "text/html").end(result);
-          };
-          if (pathFile) {
-            return await send(reqPath, pathFile);
-          } else if (!isAsset(reqPath)) {
-            const find = Object.keys(area).find((p) => reqPath.startsWith(p));
-            if (find) return await send(reqPath, area[find]);
           }
         }
         const mod = await server.ssrLoadModule(opts.entry!);
-        await opts.serverTypeFunc.handle(mod.default, req, res, next);
+        const app = mod.default;
+        app.viteDevServer = server;
+        await opts.serverTypeFunc.handle(app, req, res, next);
       });
     },
   };
@@ -53,6 +50,7 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
   let outDir: string, base: string, root: string;
   opts.clientDir ??= "client";
   opts.startServer ??= true;
+  const _areas = opts["_areas"] as Record<string, any>[];
   return {
     name: "vite-spa-server-build",
     apply: "build",
@@ -68,7 +66,7 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
       if (opts.area) {
         self.build ??= {};
         self.build.rollupOptions ??= {};
-        self.build.rollupOptions.input = mutateArea(normArea(opts.area));
+        self.build.rollupOptions.input = mutateArea(_areas);
       }
       if (opts.base) self.base = opts.base;
       return self;
@@ -94,43 +92,29 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
         },
       });
       if (opts.buildServer === false) return;
-      const areas = [],
-        wildcard = opts.routerType === "browser";
-      let home: Record<string, any>;
-      if (opts.area) {
-        const area = normArea(opts.area);
-        if (!(opts.base in area)) {
-          opts.base = findBase(area) ?? opts.base;
-        }
-        for (const k in opts.area) {
-          let val = opts.area[k];
+      const wildcard = opts.routerType === "browser";
+      let areas = [
+        {
+          route: opts.base,
+          path: opts.base,
+          index: "index.html",
+          isMain: true,
+          dir: "",
+          wildcard,
+        },
+      ] as any[];
+      if (_areas) {
+        opts.base = findBase(_areas) ?? opts.base;
+        areas = _areas.map((el) => {
+          let val = el.index;
           if (!path.isAbsolute(val)) val = path.join(root, val);
           if (!fs.existsSync(val)) {
             throw new Error(`file '${val}' not found`);
           }
           const dir = path.dirname(val).replace(root, "");
           const index = path.basename(val);
-          const isWild = k.endsWith("*");
-          const p = isWild ? k.slice(0, k === "/*" ? -1 : -2) : k;
-          const isMain = p === opts.base;
-          const data = {
-            path: p,
-            index,
-            isMain,
-            dir,
-            wildcard: wildcard || isWild,
-          };
-          if (isMain) home = data;
-          else areas.push(data);
-        }
-        if (home) areas.push(home);
-      } else {
-        areas.push({
-          path: opts.base,
-          index: "index.html",
-          isMain: true,
-          dir: "",
-          wildcard,
+          const isMain = el.path === opts.base;
+          return { ...el, isMain, dir, index };
         });
       }
       fs.writeFileSync(
@@ -180,6 +164,21 @@ export const spaServer = (opts: SPAServerOptions = {}): PluginOption => {
   opts.runtime ??= "node";
   opts.serverTypeFunc ??= typeof typ === "string" ? fw[typ] : typ;
   opts.routerType ??= "browser";
+  if (opts.area) {
+    const area = opts.area;
+    opts["_areas"] = Object.keys(area)
+      .sort((a, b) => b.length - a.length)
+      .sort((a, b) => b.split("/").length - a.split("/").length)
+      .map((el) => {
+        const isWild = el.endsWith("*");
+        return {
+          path: isWild ? el.slice(0, el === "/*" ? -1 : -2) : el,
+          route: el,
+          index: area[el],
+          wildcard: opts.routerType === "browser" || isWild,
+        };
+      });
+  }
   return [buildServer(opts), devServer(opts)];
 };
 
@@ -189,34 +188,26 @@ const normUrl = (url: string) => {
   return url;
 };
 
-const findBase = (area: Record<string, string>) => {
-  const keys = Object.keys(area);
-  return keys.find((el) => el === "/") || keys[0];
-};
-
-const normArea = (area: Record<string, string>) => {
-  if (!area) return null;
-  const out = {};
-  for (const k in area) {
-    const isWild = k.endsWith("*");
-    const p = isWild ? k.slice(0, k === "/*" ? -1 : -2) : k;
-    out[p] = area[k];
+const findBase = (areas?: Record<string, string>[]) => {
+  if (areas) {
+    const base = areas.find(({ path }) => path === "/");
+    return base?.path ?? areas[0]?.path;
   }
-  return out;
+  return null;
 };
 
-const mutateArea = (area: Record<string, string>) => {
+const mutateArea = (areas: Record<string, any>[]) => {
   const out = {} as Record<string, string>;
-  for (const k in area) {
-    const val = area[k];
+  areas.forEach((el) => {
+    const k = el.path;
     if (k === "/") {
-      out.index = val;
+      out.index = el.index;
     } else if (k.includes("/")) {
-      out[k.replaceAll("/", "")] = val;
+      out[k.replaceAll("/", "")] = el.index;
     } else {
-      out[k] = val;
+      out[k] = el.index;
     }
-  }
+  });
   return out;
 };
 
