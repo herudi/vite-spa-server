@@ -1,4 +1,6 @@
 import type { ServerResponse, IncomingMessage } from "node:http";
+import { Buffer } from "node:buffer";
+
 /**
  * Converts a Node.js IncomingMessage to a Web API Request object.
  * Handles protocol, headers, and body conversion between Node.js and Web APIs.
