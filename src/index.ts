@@ -142,7 +142,7 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
  * export default defineConfig({
  *   plugins: [
  *     spaServer({
- *       entry: './src/server/index.ts',
+ *       entry: './src/server.ts',
  *       port: 3000,
  *       serverType: 'express'
  *     })
@@ -159,7 +159,12 @@ const buildServer = (opts: SPAServerOptions = {}): PluginOption => {
  * - Custom server type implementation support
  */
 export const spaServer = (opts: SPAServerOptions = {}): PluginOption => {
-  opts.entry ??= "./src/server/index.ts";
+  opts.entry ??= ["./src/server.ts", "./src/server.js"].find((entry) =>
+    fs.existsSync(entry),
+  );
+  if (!opts.entry) {
+    throw new Error(`Entry server ${opts.entry} not found`);
+  }
   const typ = (opts.serverType ??= "express");
   opts.runtime ??= "node";
   opts.serverTypeFunc ??= typeof typ === "string" ? fw[typ] : typ;
