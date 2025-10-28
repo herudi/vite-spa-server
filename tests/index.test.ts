@@ -5,14 +5,14 @@ import type { SPAServerOptions } from "../src/types.js";
 
 describe("spaServer", () => {
   it("should create plugin with default options", () => {
-    const plugins = spaServer() as any[];
+    const plugins = spaServer({ entry: "./src/server.ts" }) as any[];
     expect(plugins).toHaveLength(2);
     expect(plugins[0].name).toBe("vite-spa-server-build");
     expect(plugins[1].name).toBe("vite-spa-server");
   });
 
   it("should set default values when no options provided", () => {
-    const plugins = spaServer() as PluginOption[];
+    const plugins = spaServer({ entry: "./src/server.ts" }) as PluginOption[];
     const buildPlugin = plugins[0] as { name: string; apply: string };
     expect(buildPlugin.apply).toBe("build");
   });
@@ -24,6 +24,7 @@ describe("spaServer", () => {
       handle: vi.fn(),
     };
     const plugins = spaServer({
+      entry: "./src/server.ts",
       serverType: customServer,
     }) as PluginOption[];
     expect(plugins).toHaveLength(2);
@@ -33,6 +34,7 @@ describe("spaServer", () => {
     const devPort = 3000;
     const prodPort = 8080;
     const plugins = spaServer({
+      entry: "./src/server.ts",
       port: {
         dev: devPort,
         prod: prodPort,
@@ -49,6 +51,7 @@ describe("spaServer", () => {
       "/about": "about.html",
     };
     const plugins = spaServer({
+      entry: "./src/server.ts",
       area,
     }) as PluginOption[];
     const buildPlugin = plugins[0] as any;
@@ -61,6 +64,7 @@ describe("spaServer", () => {
   it("should handle base URL configuration", () => {
     const base = "/app";
     const plugins = spaServer({
+      entry: "./src/server.ts",
       base,
     }) as PluginOption[];
     const devPlugin = plugins[1] as any;
@@ -69,13 +73,13 @@ describe("spaServer", () => {
   });
 
   it("should set default router type to browser", () => {
-    const options: SPAServerOptions = {};
+    const options: SPAServerOptions = { entry: "./src/server.ts" };
     spaServer(options);
     expect(options.routerType).toBe("browser");
   });
 
   it("should set default runtime to node", () => {
-    const options: SPAServerOptions = {};
+    const options: SPAServerOptions = { entry: "./src/server.ts" };
     spaServer(options);
     expect(options.runtime).toBe("node");
   });
