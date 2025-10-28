@@ -5,7 +5,7 @@ Vite plugin <i>Single-Port</i> between Backend and Frontend.
 > Design for Single Fighter Developer who want to build Fullstack Application with ease.
 
 [![ci](https://img.shields.io/github/actions/workflow/status/herudi/vite-spa-server/ci.yml?branch=master)](https://github.com/herudi/vite-spa-server)
-[![npm version](https://img.shields.io/badge/npm-0.0.8-blue.svg)](https://npmjs.org/package/vite-spa-server)
+[![npm version](https://img.shields.io/badge/npm-1.0.0-blue.svg)](https://npmjs.org/package/vite-spa-server)
 [![License](https://img.shields.io/:license-mit-blue.svg)](http://badges.mit-license.org)
 [![download-url](https://img.shields.io/npm/dm/vite-spa-server.svg)](https://npmjs.org/package/vite-spa-server)
 
@@ -27,10 +27,10 @@ When developing a Single Page Application (SPA) with a backend API, managing sep
 
 Create vite project.
 
-> Example: React as frontend and Express as backend.
+> Example: React as frontend and Express as backend (both typescript).
 
 ```bash
-npm create vite@latest my-app -- --template react
+npm create vite@latest my-app -- --template react-ts
 
 cd my-app
 
@@ -40,9 +40,9 @@ npm install
 then, install `vite-spa-server` and `express`
 
 ```bash
-npm install vite-spa-server --save-dev
-
 npm install express
+
+npm install vite-spa-server @types/express --save-dev
 ```
 
 In your `vite.config.ts` file, import and use the plugin:
@@ -56,6 +56,7 @@ export default defineConfig({
   plugins: [
     react(),
     spaServer({
+      entry: "./src/server.ts",
       port: 3000,
       serverType: "express",
     }),
@@ -63,7 +64,7 @@ export default defineConfig({
 });
 ```
 
-then, create minimal server at `src/server/index.ts`:
+then, create minimal server at `./src/server.ts`:
 
 ```javascript
 import express from "express";
@@ -103,7 +104,7 @@ node dist
 
 - `port`: The port number on which the server will run.
 - `serverType`: The type of backend server to use (e.g., `express`, `hono`, `nhttp`, etc.).
-- `entry`: The entry point file for your backend server (default: `./src/server/index.ts`).
+- `entry`: The entry point file for your backend server (default: `./src/server.(ts|js)`).
 - `runtime`: The runtime environment for the server (default: `node`).
 - `build`: Build options for the server.
 - `area`: Map path to html for multiple apps.

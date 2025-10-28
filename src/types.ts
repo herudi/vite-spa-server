@@ -29,7 +29,9 @@ export interface SPAServerOptions {
    * Entry point file path for the main server.
    * This is typically your main server file.
    * @default
-   * "./src/server/index.ts"
+   * "./src/server.ts"
+   * or
+   * "./src/server.js"
    */
   entry?: string;
 
